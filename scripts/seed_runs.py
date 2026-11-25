@@ -16,13 +16,12 @@ import asyncpg
 
 async def main(n: int) -> None:
     import os
-    dsn = (
-        f"postgres://{os.environ.get('POSTGRES_USER','rag')}:"
-        f"{os.environ.get('POSTGRES_PASSWORD','rag')}@"
-        f"{os.environ.get('POSTGRES_HOST','localhost')}:"
-        f"{os.environ.get('POSTGRES_PORT','5432')}/"
-        f"{os.environ.get('POSTGRES_DB','rag')}"
-    )
+    user = os.environ["POSTGRES_USER"]
+    pwd  = os.environ["POSTGRES_PASSWORD"]
+    db   = os.environ["POSTGRES_DB"]
+    host = os.environ.get("POSTGRES_HOST", "localhost")
+    port = os.environ.get("POSTGRES_PORT", "5432")
+    dsn = f"postgres://{user}:{pwd}@{host}:{port}/{db}"
     conn = await asyncpg.connect(dsn)
     now = datetime.now(timezone.utc)
     rows = []

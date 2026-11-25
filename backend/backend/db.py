@@ -11,13 +11,12 @@ _POOL: asyncpg.Pool | None = None
 
 
 def _dsn() -> str:
-    return (
-        f"postgres://{os.environ.get('POSTGRES_USER','rag')}:"
-        f"{os.environ.get('POSTGRES_PASSWORD','rag')}@"
-        f"{os.environ.get('POSTGRES_HOST','postgres')}:"
-        f"{os.environ.get('POSTGRES_PORT','5432')}/"
-        f"{os.environ.get('POSTGRES_DB','rag')}"
-    )
+    user = os.environ["POSTGRES_USER"]
+    pwd  = os.environ["POSTGRES_PASSWORD"]
+    db   = os.environ["POSTGRES_DB"]
+    host = os.environ.get("POSTGRES_HOST", "postgres")
+    port = os.environ.get("POSTGRES_PORT", "5432")
+    return f"postgres://{user}:{pwd}@{host}:{port}/{db}"
 
 
 async def startup() -> None:
