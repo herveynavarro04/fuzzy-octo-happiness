@@ -1,0 +1,194 @@
+# Perfiles:
+#   (default)  -> postgres, redis, opensearch, api, frontend         (corre en 8 GB)
+#   models     -> vllm-embed, vllm-rerank                            (Mac de Miguel)
+#   ingest     -> vllm-vlm                                           (solo durante ingesta)
+#   tunnel     -> ngrok                                              (demo)
+#
+# Ollama NO va en Docker: corre nativo en el host y los contenedores lo
+# llaman por http://host.docker.internal:11434.
+
+name: rag-agent
+
+x-env: &env
+  env_file:
+    - ../.env
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-rag}
+      POSTGRES_USER: ${POSTGRES_USER:-rag}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rag}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-rag}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  opensearch:
+    image: opensearchproject/opensearch:2.19.0
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - plugins.security.disabled=true
+      - DISABLE_SECURITY_PLUGIN=true
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=Admin_please_change_1
+      - bootstrap.memory_lock=false
+    ulimits:
+      memlock: { soft: -1, hard: -1 }
+      nofile:  { soft: 65536, hard: 65536 }
+    volumes:
+      - osdata:/usr/share/opensearch/data
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health | grep -E 'green|yellow'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  api:
+    <<: *env
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:    { condition: service_healthy }
+      redis:       { condition: service_healthy }
+      opensearch:  { condition: service_healthy }
+    environment:
+      POSTGRES_HOST: postgres
+      REDIS_URL: redis://redis:6379/0
+      OPENSEARCH_URL: http://opensearch:9200
+    volumes:
+      - ../resources:/resources:ro
+      - ../data:/app/data
+    ports:
+      - "8000:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8000
+
+  # --------- Perfil "models": embeddings + reranker ---------
+  # Notas (sin verificar en macOS/CPU — ver HANDOFF.md):
+  #   * El reranker nvidia/llama-nemotron-rerank-1b-v2 requiere --trust-remote-code
+  #     y sirve la clasificación por la API de scoring (/v1/score). Ver model card.
+  #   * nvidia/Nemotron-3-Embed-1B-BF16 recomienda una versión reciente de vLLM;
+  #     pinned a 0.11.0 porque añadió soporte limpio al endpoint /v1/embeddings.
+  #     Confirmar flags con la model card antes de arrancar.
+  vllm-embed:
+    image: vllm/vllm-openai:v0.11.0
+    profiles: ["models"]
+    restart: unless-stopped
+    environment:
+      HF_HOME: /models
+      HUGGING_FACE_HUB_TOKEN: ${HUGGING_FACE_HUB_TOKEN:-}
+    volumes:
+      - hfcache:/models
+    command:
+      - "--model"
+      - "nvidia/Nemotron-3-Embed-1B-BF16"
+      - "--task"
+      - "embed"
+      - "--trust-remote-code"
+      - "--served-model-name"
+      - "nvidia/Nemotron-3-Embed-1B-BF16"
+      - "--port"
+      - "8000"
+    ports:
+      - "8001:8000"
+
+  vllm-rerank:
+    image: vllm/vllm-openai:v0.11.0
+    profiles: ["models"]
+    restart: unless-stopped
+    environment:
+      HF_HOME: /models
+      HUGGING_FACE_HUB_TOKEN: ${HUGGING_FACE_HUB_TOKEN:-}
+    volumes:
+      - hfcache:/models
+    command:
+      - "--model"
+      - "nvidia/llama-nemotron-rerank-1b-v2"
+      - "--task"
+      - "score"
+      - "--trust-remote-code"
+      - "--served-model-name"
+      - "nvidia/llama-nemotron-rerank-1b-v2"
+      - "--port"
+      - "8000"
+    ports:
+      - "8002:8000"
+
+  # --------- Perfil "ingest": VLM para describir figuras ---------
+  vllm-vlm:
+    image: vllm/vllm-openai:v0.11.0
+    profiles: ["ingest"]
+    restart: unless-stopped
+    environment:
+      HF_HOME: /models
+      HUGGING_FACE_HUB_TOKEN: ${HUGGING_FACE_HUB_TOKEN:-}
+    volumes:
+      - hfcache:/models
+    command:
+      - "--model"
+      - "Qwen/Qwen2.5-VL-7B-Instruct"
+      - "--trust-remote-code"
+      - "--served-model-name"
+      - "Qwen/Qwen2.5-VL-7B-Instruct"
+      - "--max-model-len"
+      - "8192"
+      - "--port"
+      - "8000"
+    ports:
+      - "8003:8000"
+
+  # --------- Perfil "tunnel": ngrok para la demo ---------
+  ngrok:
+    image: ngrok/ngrok:latest
+    profiles: ["tunnel"]
+    restart: unless-stopped
+    depends_on:
+      - frontend
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    command: ["http", "frontend:5173"]
+    ports:
+      - "4040:4040"
+
+volumes:
+  pgdata:
+  osdata:
+  hfcache:

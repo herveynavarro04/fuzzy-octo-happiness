@@ -10,7 +10,13 @@
       "Read(//Users/herveynavarro/.pyenv/**)",
       "Read(//Users/herveynavarro/**)",
       "Bash(/Applications/Docker.app/Contents/Resources/bin/docker ps *)",
-      "Bash(/Applications/Docker.app/Contents/Resources/bin/docker compose *)"
+      "Bash(/Applications/Docker.app/Contents/Resources/bin/docker compose *)",
+      "Bash(git reset *)",
+      "Bash(git config *)",
+      "Bash(git commit -m 'paso 1: repo, contracts y .env.example *)",
+      "Bash(echo \"---exit=$?\")",
+      "Bash(git add *)",
+      "Bash(git commit -m 'paso 2: docker compose con 4 perfiles + init.sql *)"
     ]
   }
 }
