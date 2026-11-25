@@ -1,0 +1,3 @@
+{"question": "¿Cuál es el título del artículo y de qué trata?", "expected_section": "Abstract", "expected_page": 1}
+{"question": "¿Qué tipo de prompting se menciona como forma de mejorar el potencial de los LLMs?", "expected_section": "Introduction", "expected_page": 2}
+{"question": "¿Qué se discute sobre los métodos de evaluación y benchmarks para agentes LLM?", "expected_section": "Introduction", "expected_page": 3}
