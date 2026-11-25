@@ -6,8 +6,6 @@ Agente que responde preguntas sobre el survey
 
 - UI con dos modos: chat con historial (`/`) y pregunta única sin historial (`/single`).
 - Panel `/admin` con KPIs: tokens entrada/salida, latencia promedio y p95, tasa de cache hit, errores, actividad por hora y corridas recientes.
-- Hoy (Hervey) todo corre con **`FAKE_MODELS=true`** (sin vLLM ni Hugging Face).
-- Mañana (Miguel) sólo cambia variables de `.env` para encender los modelos reales.
 
 Stack: FastAPI, Pydantic AI, PostgreSQL, Redis, OpenSearch, React+Vite+TS, Docling, vLLM, Ollama, Hugging Face, Docker, ngrok.
 
