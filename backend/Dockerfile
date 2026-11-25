@@ -12,11 +12,21 @@ WORKDIR /app
 COPY contracts/ /app/contracts/
 COPY retrieval/ /app/retrieval/
 COPY backend/   /app/backend/
+COPY scripts/   /app/scripts/
+# El PDF y el documento de división se incluyen en la imagen porque Docker
+# Desktop en macOS puede no tener el repo en su File Sharing. Al pasar a
+# modelos reales, Miguel puede remontar resources/ como volumen RO.
+COPY resources/ /resources/
 
 RUN pip install --no-cache-dir \
     /app/contracts \
     /app/retrieval \
     /app/backend
+
+# Docling es opcional; si falla en esta plataforma el ingest cae al
+# chunker falso (ver retrieval/chunker.py). No bloqueamos el build.
+RUN pip install --no-cache-dir docling==2.37.0 || \
+    echo "WARN: docling not installed; ingest will use fake chunker"
 
 EXPOSE 8000
 

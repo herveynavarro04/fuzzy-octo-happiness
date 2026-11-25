@@ -36,6 +36,19 @@ class DoclingUnavailable(RuntimeError):
     pass
 
 
+def _safe_caption(item, default: str) -> str:
+    """docling-core expone `caption_text` como método en versiones recientes."""
+    val = getattr(item, "caption_text", None)
+    if callable(val):
+        try:
+            val = val()
+        except Exception:
+            val = None
+    if isinstance(val, str) and val.strip():
+        return val.strip()
+    return default
+
+
 # ----------------------------- Docling -----------------------------
 
 def _docling_convert(pdf_path: Path):
@@ -100,7 +113,7 @@ def _iter_docling_chunks(result) -> Iterable[RawChunk]:
         yield RawChunk(
             id=str(uuid.uuid4()),
             text=md,
-            section=getattr(table, "caption_text", "") or "Table",
+            section=_safe_caption(table, "Table"),
             page=page,
             kind="table",
         )
@@ -125,7 +138,7 @@ def extract_figures(result, out_dir: Path) -> list[RawChunk]:
             if getattr(prov, "page_no", None):
                 page = int(prov.page_no)
                 break
-        caption = getattr(pic, "caption_text", "") or f"Figure {i+1}"
+        caption = _safe_caption(pic, f"Figure {i+1}")
         chunks.append(RawChunk(
             id=str(uuid.uuid4()),
             text=f"[figure placeholder] {caption}",

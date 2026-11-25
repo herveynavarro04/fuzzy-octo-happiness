@@ -10,8 +10,10 @@ dependencies = [
     "numpy==2.1.3",
     "opensearch-py==2.7.1",
     "redis==5.2.0",
-    "docling==2.14.0",
-    "huggingface_hub==0.26.2",
+    # Docling is optional — the ingest falls back to a fake chunker if it
+    # cannot import. Pin loose so Miguel can install a newer wheel without
+    # fighting the resolver. In the API container we install it separately.
+    "huggingface_hub>=0.26,<2.5",
 ]
 
 [project.scripts]

@@ -15,7 +15,9 @@ x-env: &env
 
 services:
   postgres:
-    image: postgres:16-alpine
+    build:
+      context: .
+      dockerfile: postgres.Dockerfile
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-rag}
@@ -23,7 +25,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rag}
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
       - "5432:5432"
     healthcheck:
@@ -49,10 +50,8 @@ services:
     restart: unless-stopped
     environment:
       - discovery.type=single-node
-      - plugins.security.disabled=true
       - DISABLE_SECURITY_PLUGIN=true
       - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
-      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=Admin_please_change_1
       - bootstrap.memory_lock=false
     ulimits:
       memlock: { soft: -1, hard: -1 }
@@ -81,9 +80,13 @@ services:
       POSTGRES_HOST: postgres
       REDIS_URL: redis://redis:6379/0
       OPENSEARCH_URL: http://opensearch:9200
+      # El PDF vive dentro de la imagen (resources/article.pdf se copia
+      # en backend/Dockerfile a /resources/). Si quieres mapear tu
+      # resources/ del host, añade:  - ../resources:/resources:ro
+      # y habilita File Sharing en Docker Desktop para este path.
+      PAPER_PATH: /resources/article.pdf
     volumes:
-      - ../resources:/resources:ro
-      - ../data:/app/data
+      - datavol:/app/data
     ports:
       - "8000:8000"
     extra_hosts:
@@ -192,3 +195,4 @@ volumes:
   pgdata:
   osdata:
   hfcache:
+  datavol:
