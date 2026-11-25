@@ -11,6 +11,7 @@ Agente Pydantic AI con:
 from __future__ import annotations
 
 import logging
+import os
 from dataclasses import dataclass
 from typing import Any
 
@@ -143,11 +144,18 @@ def _build_model():
 
 
 def build_agent() -> Agent[Deps, Answer]:
+    reasoning_effort = os.getenv("OLLAMA_REASONING_EFFORT")
+    model_settings = (
+        {"extra_body": {"reasoning_effort": reasoning_effort}}
+        if reasoning_effort and not get_settings().fake_models
+        else None
+    )
     agent = Agent[Deps, Answer](
         _build_model(),
         deps_type=Deps,
         output_type=Answer,
         system_prompt=SYSTEM_PROMPT,
+        model_settings=model_settings,
     )
     _build_search_tool(agent)
     return agent
