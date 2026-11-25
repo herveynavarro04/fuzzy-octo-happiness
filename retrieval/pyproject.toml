@@ -5,7 +5,7 @@ description = "Ingesta (Docling), clientes de embeddings/VLM/reranker, índice O
 requires-python = ">=3.12"
 dependencies = [
     "contracts",
-    "pydantic==2.9.2",
+    "pydantic>=2.9,<3",
     "httpx==0.27.2",
     "numpy==2.1.3",
     "opensearch-py==2.7.1",

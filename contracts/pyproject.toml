@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Shared Pydantic contracts for the RAG agent"
 requires-python = ">=3.12"
 dependencies = [
-    "pydantic==2.9.2",
+    "pydantic>=2.9,<3",
 ]
 
 [build-system]
