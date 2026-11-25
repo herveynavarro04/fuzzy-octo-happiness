@@ -1,0 +1,106 @@
+:root {
+  --fg: #111418;
+  --muted: #6b7280;
+  --bg: #fafafa;
+  --card: #ffffff;
+  --border: #e5e7eb;
+  --accent: #111418;
+  --error: #b42318;
+}
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg); color: var(--fg); font-size: 15px;
+}
+.app { max-width: 1100px; margin: 0 auto; padding: 24px; }
+.nav {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border);
+}
+.brand { font-weight: 600; color: var(--fg); text-decoration: none; }
+.links a { color: var(--muted); margin-left: 16px; text-decoration: none; }
+.links a:hover { color: var(--fg); }
+
+h1 { font-size: 22px; margin: 0 0 8px; font-weight: 600; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.error { background: #fef2f2; color: var(--error); padding: 10px; border-radius: 6px; margin: 12px 0; font-size: 14px; }
+
+.composer { display: flex; gap: 8px; margin-top: 16px; }
+.composer input {
+  flex: 1; padding: 10px 12px; border: 1px solid var(--border);
+  border-radius: 6px; font: inherit; background: var(--card);
+}
+.composer input:focus { outline: 2px solid var(--fg); outline-offset: -1px; }
+button {
+  padding: 10px 16px; border: 1px solid var(--fg); background: var(--fg);
+  color: #fff; border-radius: 6px; cursor: pointer; font: inherit;
+}
+button:disabled { opacity: 0.5; cursor: default; }
+button.ghost { background: transparent; color: var(--fg); }
+
+/* Chat */
+.thread { display: flex; flex-direction: column; gap: 14px; margin-top: 16px; }
+.turn { max-width: 80%; }
+.turn-user { align-self: flex-end; }
+.turn-assistant { align-self: flex-start; }
+.bubble {
+  padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--card); white-space: pre-wrap;
+}
+.turn-user .bubble { background: var(--fg); color: #fff; border-color: var(--fg); }
+
+/* Citations */
+.citations { margin-top: 6px; font-size: 13px; color: var(--muted); }
+.citations-label { font-weight: 600; margin-bottom: 2px; }
+.citations ul { list-style: none; padding: 0; margin: 0; }
+.citations li { display: flex; gap: 10px; }
+.cite-section { color: var(--fg); }
+
+/* Single */
+.answer { margin-top: 20px; }
+.answer-meta {
+  display: flex; gap: 12px; font-size: 12px; color: var(--muted); margin-bottom: 6px;
+}
+
+/* Admin */
+.admin-login { max-width: 320px; }
+.admin-login input {
+  width: 100%; padding: 10px; border: 1px solid var(--border);
+  border-radius: 6px; margin: 12px 0; font: inherit;
+}
+.header-row { display: flex; justify-content: space-between; align-items: center; }
+.kpis {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px; margin: 16px 0;
+}
+.kpi {
+  padding: 14px; border: 1px solid var(--border);
+  border-radius: 8px; background: var(--card);
+}
+.kpi-value { font-size: 22px; font-weight: 600; }
+.kpi-label { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.section-label { font-weight: 600; font-size: 13px; color: var(--muted); margin: 18px 0 8px; }
+.activity .bars {
+  display: flex; align-items: end; gap: 2px; height: 120px;
+  padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--card);
+}
+.bar-col { flex: 1; height: 100%; display: flex; align-items: end; }
+.bar { width: 100%; background: var(--fg); min-height: 1px; }
+
+table.runs {
+  width: 100%; border-collapse: collapse; background: var(--card);
+  border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+  font-size: 13px;
+}
+.runs th, .runs td {
+  padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left;
+  vertical-align: top;
+}
+.runs tr:last-child td { border-bottom: 0; }
+.runs th { background: #f3f4f6; font-weight: 600; }
+.runs tr.err td { background: #fef2f2; }
+.mono { font-family: ui-monospace, Menlo, monospace; }
+.runs td.q, .runs td.a { max-width: 260px; }
+.runs td.err-cell { color: var(--error); max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
