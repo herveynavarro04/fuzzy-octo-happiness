@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(command -v uv)",
+      "Bash(command -v python3.12)",
+      "Bash(command -v python3)",
+      "Bash(command -v docker)",
+      "Bash(command -v node)",
+      "Bash(/Applications/Docker.app/Contents/Resources/bin/docker --version)",
+      "Read(//Users/herveynavarro/.pyenv/**)",
+      "Read(//Users/herveynavarro/**)",
+      "Bash(/Applications/Docker.app/Contents/Resources/bin/docker ps *)",
+      "Bash(/Applications/Docker.app/Contents/Resources/bin/docker compose *)"
+    ]
+  }
+}
