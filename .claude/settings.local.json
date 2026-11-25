@@ -16,7 +16,8 @@
       "Bash(git commit -m 'paso 1: repo, contracts y .env.example *)",
       "Bash(echo \"---exit=$?\")",
       "Bash(git add *)",
-      "Bash(git commit -m 'paso 2: docker compose con 4 perfiles + init.sql *)"
+      "Bash(git commit -m 'paso 2: docker compose con 4 perfiles + init.sql *)",
+      "Bash(git commit -m 'paso 3: scripts/download_models.py \\(huggingface_hub\\) *)"
     ]
   }
 }
