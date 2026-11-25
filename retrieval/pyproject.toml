@@ -1,0 +1,28 @@
+[project]
+name = "retrieval"
+version = "0.1.0"
+description = "Ingesta (Docling), clientes de embeddings/VLM/reranker, índice OpenSearch y retrieve híbrido"
+requires-python = ">=3.12"
+dependencies = [
+    "contracts",
+    "pydantic==2.9.2",
+    "httpx==0.27.2",
+    "numpy==2.1.3",
+    "opensearch-py==2.7.1",
+    "redis==5.2.0",
+    "docling==2.14.0",
+    "huggingface_hub==0.26.2",
+]
+
+[project.scripts]
+rag-ingest = "retrieval.ingest:main"
+
+[tool.uv.sources]
+contracts = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["retrieval"]
