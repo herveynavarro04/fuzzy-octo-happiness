@@ -1,0 +1,18 @@
+{"question":"¿Cuál es el título del artículo?","expected_section":"Abstract","expected_page":1}
+{"question":"¿Quiénes son los autores del artículo?","expected_section":"","expected_page":1}
+{"question":"¿En qué revista y año se publicó el artículo?","expected_section":"","expected_page":1}
+{"question":"¿Qué técnicas de prompting menciona la introducción como formas de mejorar el potencial de los LLMs?","expected_section":"Introduction","expected_page":2}
+{"question":"¿Qué contribuciones principales enumeran los autores en la introducción?","expected_section":"Introduction","expected_page":3}
+{"question":"¿Cuántos artículos incluyeron en la revisión después del scoring temático?","expected_section":"Thematic scoring","expected_page":9}
+{"question":"¿Qué categorías de uso de herramientas describe la sección 5.1?","expected_section":"5.1","expected_page":16}
+{"question":"¿Qué es Reflexion y cómo acumula experiencia?","expected_section":"","expected_page":36}
+{"question":"¿Qué desafíos futuros identifican los autores para los agentes LLM?","expected_section":"Future directions","expected_page":46}
+{"question":"¿Cómo se organiza el resto del review según el final de la introducción?","expected_section":"Introduction","expected_page":3}
+{"question":"Según la tabla de taxonomía, ¿qué subcategoría corresponde a 'Hierarchical & Role-Based Collaboration'?","expected_section":"Table","expected_page":5}
+{"question":"¿Qué dos países concentran la mayoría de publicaciones según la tabla de distribución geográfica?","expected_section":"Table","expected_page":9}
+{"question":"¿Qué limitaciones aparecen en la tabla comparativa de datasets alrededor de la página 41?","expected_section":"Table","expected_page":41}
+{"question":"¿Qué limitaciones de los agentes LLM se ilustran en la Figura 7?","expected_section":"Future directions","expected_page":46}
+{"question":"¿Qué muestra la figura del pipeline PRISMA de selección de artículos?","expected_section":"","expected_page":9}
+{"question":"¿Cuál es el precio actual del bitcoin?","expected_section":"none","expected_page":0}
+{"question":"¿Cómo se escribe un bucle for en Python?","expected_section":"none","expected_page":0}
+{"question":"¿Quién ganó el Mundial de futbol 2022?","expected_section":"none","expected_page":0}

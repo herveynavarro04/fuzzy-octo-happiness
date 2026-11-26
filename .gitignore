@@ -12,7 +12,6 @@ build/
 .env.local
 data/chunks.jsonl
 data/figures/
-data/eval_questions.jsonl
 data/hf_cache/
 .DS_Store
 *.egg-info/

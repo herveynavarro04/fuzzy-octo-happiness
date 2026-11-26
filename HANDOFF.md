@@ -233,3 +233,133 @@ Contratos (**no cambiar sin avisarme**): `Chunk`, `Answer`, tabla `runs`.
 - `opentelemetry-api` necesita versión `1.28.0` (o compatible) para que `pydantic-ai 0.4.11` importe `opentelemetry._events`. Fijado en `backend/pyproject.toml`.
 - OpenSearch con heap de 512 MB puede tardar ~20 s en levantar la primera vez.
 - El agente falso **cita chunks reales** del retrieval; eso valida el contrato, pero el texto de la respuesta es un prefijo + snippet, no una redacción natural. Eso cambia al pasar a Ollama.
+
+---
+
+## 11. Para el README — PENDIENTEs que tienes que llenar
+
+El `README.md` tiene 10 marcadores `PENDIENTE` que debes completar para que
+el profe califique todos los criterios de la rúbrica. Lista con comando
+exacto y dónde pegar el resultado:
+
+### A. Evidencia de cuartil Q1 (sección 2)
+
+- **Qué**: captura de SJR o JCR mostrando que *Artificial Intelligence Review*
+  es Q1 en "Artificial Intelligence".
+- **Cómo**: abre https://www.scimagojr.com/journalsearch.php?q=24059&tip=sid
+  y screenshot del año 2024 o 2025.
+- **Dónde guardar**: `docs/evidencia_q1.png`.
+- **Dónde referenciar en README**: sección 2, reemplaza el bloque
+  `> PENDIENTE (Hervey): ...` por `![Evidencia Q1](docs/evidencia_q1.png)`.
+
+### B. Chip y RAM total (sección 4)
+
+- **Comando**:
+  ```bash
+  system_profiler SPHardwareDataType | grep -E "Chip|Memory"
+  # con todo arriba:
+  docker stats --no-stream --format "table {{.Container}}\t{{.MemUsage}}"
+  ps -axm -o rss,command | grep ollama | awk '{sum+=$1} END {print "ollama RSS MB:", sum/1024}'
+  ```
+- **Pegar** el chip y la suma en la tabla de la sección 4.
+
+### C. Un chunk de figura real (sección 5)
+
+- **Comando** (con `FAKE_MODELS=false` y perfil `ingest` arriba):
+  ```bash
+  docker compose -f infra/docker-compose.yml exec api \
+      python -m retrieval.ingest figures
+  docker compose -f infra/docker-compose.yml exec api \
+      grep '"kind":"figure"' data/chunks.jsonl | head -1 | python -m json.tool
+  ```
+- **Pegar** el JSON como cuarto ejemplo en el bloque de chunks de la sección 5.
+
+> **Nota de estado (25-nov):** los puntos F (bench_cache) y G (panel admin
+> KPIs) ya tienen números reales en el README y archivos de evidencia en
+> `docs/admin_*.json`; el punto H (healthchecks) ya está en el compose;
+> el punto A (captura Q1) lo hace Hervey a mano.
+> Lo que sigue aquí abajo es lo que **requiere modelos reales** mañana.
+
+### D. Tabla Hit@5 / MRR@5 (sección 6)
+
+- **Comando** (con modelos reales):
+  ```bash
+  docker compose -f infra/docker-compose.yml exec api \
+      python /app/scripts/eval_retrieval.py -k 5
+  ```
+- **Pegar** la tabla markdown que imprime, reemplazando la tabla con
+  `PENDIENTE | PENDIENTE` de la sección 6.
+
+### E. Dataset y resultados end-to-end (sección 8)
+
+- **Escribir** ≥ 15 preguntas (idealmente 25–30) en
+  `data/eval_questions.jsonl`. Cubrir:
+  - 10 preguntas de texto en secciones distintas,
+  - 3 sobre figuras,
+  - 3 sobre tablas,
+  - 3 que el artículo no responde (pon `expected_section: "none"`,
+    `expected_page: 0`).
+- **Comando**:
+  ```bash
+  docker compose -f infra/docker-compose.yml exec api \
+      python /app/scripts/eval_answers.py --base http://api:8000
+  ```
+- **Pegar** las primeras ~15 filas de `data/eval_results.csv` como tabla
+  markdown en la sección 8, y las 3 líneas de resumen debajo.
+
+### F. Latencia con / sin caché (sección 9)
+
+- **Comando**:
+  ```bash
+  docker compose -f infra/docker-compose.yml exec api \
+      python /app/scripts/bench_cache.py --n 10 --redis redis://redis:6379/0
+  ```
+- **Pegar** la tabla markdown en la sección 9.
+
+### G. Capturas del panel `/admin` (sección 10)
+
+- **Comando** (datos simulados primero):
+  ```bash
+  docker compose -f infra/docker-compose.yml exec api \
+      python /app/scripts/seed_runs.py 50
+  open http://localhost:5173/admin   # token = ADMIN_TOKEN de .env
+  ```
+- **Guardar** la captura como `docs/admin.png` y referenciar en la sección 10.
+
+### H. Healthchecks en api y frontend (sección 13)
+
+- **Qué falta**: healthcheck HTTP para `api` (curl a `/healthz`) y
+  `frontend` (curl a `/`).
+- **Cómo**: añadir a `infra/docker-compose.yml` bajo cada servicio:
+  ```yaml
+      healthcheck:
+        test: ["CMD-SHELL", "curl -sf http://localhost:8000/healthz || exit 1"]
+        interval: 10s
+        timeout: 3s
+        retries: 10
+  ```
+- **Dónde referenciar**: quita el TODO de la sección 13 cuando lo hagas.
+
+### I. Evidencia del rerank on/off (sección 14)
+
+- **Comando** (dos corridas):
+  ```bash
+  # con rerank
+  sed -i '' 's/^USE_RERANKER=.*/USE_RERANKER=true/'  .env
+  docker compose -f infra/docker-compose.yml restart api
+  docker compose -f infra/docker-compose.yml exec api \
+      python /app/scripts/eval_retrieval.py -k 5 | tee /tmp/with_rr.md
+  # sin rerank
+  sed -i '' 's/^USE_RERANKER=.*/USE_RERANKER=false/' .env
+  docker compose -f infra/docker-compose.yml restart api
+  docker compose -f infra/docker-compose.yml exec api \
+      python /app/scripts/eval_retrieval.py -k 5 | tee /tmp/no_rr.md
+  ```
+- **Pegar** ambos resultados en la sección 14 como "con rerank" vs
+  "sin rerank".
+
+### J. Figura real en la tabla de la sección 14
+
+- Ya queda cubierto por el paso C — basta con que un chunk tipo `figure`
+  tenga descripción no-vacía y se cite en alguna respuesta de la evaluación.
+

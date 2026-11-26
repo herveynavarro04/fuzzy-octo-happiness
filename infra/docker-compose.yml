@@ -91,6 +91,12 @@ services:
       - "8000:8000"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/healthz || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+      start_period: 15s
 
   frontend:
     build:
@@ -103,6 +109,12 @@ services:
       - "5173:5173"
     environment:
       VITE_API_URL: http://localhost:8000
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5173/ > /dev/null || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+      start_period: 15s
 
   # --------- Perfil "models": embeddings + reranker ---------
   # Notas (sin verificar en macOS/CPU — ver HANDOFF.md):
