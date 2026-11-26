@@ -340,23 +340,53 @@ exacto y dónde pegar el resultado:
   ```
 - **Dónde referenciar**: quita el TODO de la sección 13 cuando lo hagas.
 
-### I. Evidencia del rerank on/off (sección 14)
+### I. Evidencia del rerank on/off (sección 14) — PRIORIDAD ALTA
 
-- **Comando** (dos corridas):
-  ```bash
-  # con rerank
-  sed -i '' 's/^USE_RERANKER=.*/USE_RERANKER=true/'  .env
-  docker compose -f infra/docker-compose.yml restart api
-  docker compose -f infra/docker-compose.yml exec api \
-      python /app/scripts/eval_retrieval.py -k 5 | tee /tmp/with_rr.md
-  # sin rerank
-  sed -i '' 's/^USE_RERANKER=.*/USE_RERANKER=false/' .env
-  docker compose -f infra/docker-compose.yml restart api
-  docker compose -f infra/docker-compose.yml exec api \
-      python /app/scripts/eval_retrieval.py -k 5 | tee /tmp/no_rr.md
-  ```
-- **Pegar** ambos resultados en la sección 14 como "con rerank" vs
-  "sin rerank".
+> **IMPORTANTE (para mañana 26-nov, antes de la entrega):** la demo del
+> 25-nov corrió con `USE_RERANKER=false` porque el reranker de NVIDIA no
+> levantó en macOS. La rúbrica cuenta el reranker como componente obligatorio
+> y la sección 14 del README lo lista como punto extra.
+>
+> **Corre los evals con el reranker ACTIVADO al menos una vez** para tener
+> números de referencia. Si vLLM sigue sin arrancar, intenta con cualquiera
+> de estas alternativas (todas sirven `/v1/score` o equivalente):
+>
+> 1. **Text-embeddings-inference (TEI) de Hugging Face** con imagen CPU:
+>    `ghcr.io/huggingface/text-embeddings-inference:cpu-1.5`. Cambia
+>    `RERANK_URL` en `.env` y lista.
+> 2. **Infinity**: `michaelf34/infinity:latest`, también CPU-friendly.
+> 3. **vLLM en Google Colab** con GPU T4 gratis + ngrok → apunta
+>    `RERANK_URL=https://xxx.ngrok-free.app/v1`.
+
+**Comando (dos corridas, con y sin rerank activo):**
+
+```bash
+# con rerank
+sed -i '' 's/^USE_RERANKER=.*/USE_RERANKER=true/'  .env
+docker compose -f infra/docker-compose.yml --env-file .env restart api
+docker compose -f infra/docker-compose.yml --env-file .env exec -T api \
+    python /app/scripts/eval_retrieval.py -k 5 | tee /tmp/with_rr.md
+docker compose -f infra/docker-compose.yml --env-file .env exec -T api \
+    python /app/scripts/eval_answers.py --base http://api:8000
+cp data/eval_results.csv data/eval_results_with_rerank.csv
+
+# sin rerank
+sed -i '' 's/^USE_RERANKER=.*/USE_RERANKER=false/' .env
+docker compose -f infra/docker-compose.yml --env-file .env restart api
+docker compose -f infra/docker-compose.yml --env-file .env exec -T api \
+    python /app/scripts/eval_retrieval.py -k 5 | tee /tmp/no_rr.md
+docker compose -f infra/docker-compose.yml --env-file .env exec -T api \
+    python /app/scripts/eval_answers.py --base http://api:8000
+cp data/eval_results.csv data/eval_results_no_rerank.csv
+```
+
+**Pegar** ambas tablas de `eval_retrieval.py` en la sección 14 del README
+como "con rerank" vs "sin rerank", y ambos CSV al repo.
+
+Si ni TEI ni Infinity ni Colab funcionan, deja en el README una línea
+explícita: *"Reranker no se pudo activar en la demo por restricciones de
+hardware; ver §15 — justificación."* — eso es lo que entregamos como
+fallback.
 
 ### J. Figura real en la tabla de la sección 14
 

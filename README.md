@@ -138,6 +138,12 @@ deja margen para la ingesta.
 el perfil `ingest`, se corre `python -m retrieval.ingest figures`, y se apaga.
 No queda residente durante la demo.
 
+> ⚠️ **Sustitución en la demo del 25-nov.** vLLM no levantó en macOS/Apple
+> Silicon y los 3 modelos marcados arriba se sirvieron desde llama.cpp
+> (embeddings) y Ollama (VLM); el reranker quedó desactivado. El código,
+> el compose y los flags de vLLM siguen presentes y verificables.
+> Justificación completa en [§15 — Sustitución de vLLM](#15-limitaciones-y-trabajo-futuro).
+
 ---
 
 ## 5. Ingesta con Docling
@@ -716,16 +722,65 @@ No publiques la URL de ngrok antes de tiempo — `/admin` queda expuesto
 
 ## 15. Limitaciones y trabajo futuro
 
-- **vLLM en macOS sin GPU NVIDIA**: *confirmado como bloqueante* en la demo
-  del 25-nov. La prueba real corrió con embeddings **Nemotron servidos por
-  llama.cpp** en lugar de vLLM, y el reranker quedó desactivado. La model
-  card del reranker solo lista GPUs NVIDIA en Linux.
-- **LLM 4B**: suficiente para RAG con contexto citado, pero puede
-  confundir referencias largas. Se verá en la evaluación de Miguel.
-- **Chunks de referencias dominan**: el PDF tiene 10+ páginas de
-  referencias; el BM25 las favorece para preguntas genéricas. Se podría
-  filtrar por `section ILIKE '%References%'` o reducir su peso en RRF.
-- **Qwen-VL es caro**: 15 GB. Si no cabe en los 24 GB, correr la etapa
+### Sustitución de vLLM en la demo: justificación
+
+**Qué pasó.** En la demo del 25-nov, 3 de los 4 modelos que la arquitectura
+asigna a vLLM se sirvieron desde otros motores:
+
+| Modelo                    | Servidor planeado | Servidor en demo | Por qué el cambio                                                                 |
+| ------------------------- | ----------------- | ---------------- | --------------------------------------------------------------------------------- |
+| Nemotron-3-Embed-1B       | vLLM              | **llama.cpp**    | vLLM no levantó en macOS/Apple Silicon (ver detalle abajo).                       |
+| llama-nemotron-rerank-1b-v2 | vLLM            | **desactivado** (`USE_RERANKER=false`) | La [model card](https://huggingface.co/nvidia/llama-nemotron-rerank-1b-v2) solo lista GPUs NVIDIA en Linux; sin backend viable en macOS. |
+| Qwen2.5-VL-7B-Instruct    | vLLM              | **Ollama**       | Mismo motivo que embed; Ollama ya está nativo en la Mac.                          |
+| Nemotron-3-Nano 4B        | Ollama            | Ollama ✅         | Sin cambios.                                                                      |
+
+**Por qué consideramos que la sustitución es aceptable:**
+
+1. **vLLM está integrado al 100 % en el repo.** Está en `infra/docker-compose.yml`
+   (perfiles `models` e `ingest`), con los comandos y flags exactos que piden las
+   model cards (`--trust-remote-code`, `--task embed`/`score`, versión de imagen
+   `v0.11.0`, `--max-model-len 8192` para el VLM, puertos y volumen `hfcache`
+   compartido). `scripts/download_models.py` llena el volumen. **El componente
+   obligatorio existe como código y como configuración; lo único que no se
+   ejecutó es el proceso.**
+
+2. **El contrato con el resto del sistema es la API OpenAI-compat**, no vLLM.
+   El cliente en `retrieval/retrieval/clients.py` hace POST plano a
+   `/v1/embeddings`, `/v1/score` y `/v1/chat/completions` contra las URLs de
+   `.env`. llama.cpp y Ollama exponen esa misma API, por lo que la sustitución
+   se hizo **cambiando únicamente `EMBED_URL` y `VLM_URL` en `.env` — cero
+   líneas de código tocadas**. El día que vLLM arranque en una máquina Linux
+   con GPU NVIDIA, se vuelven a apuntar las URLs y funciona sin diff.
+
+3. **El riesgo estaba identificado y documentado desde el inicio.** El
+   documento de división de tareas (24-nov, `resources/Agente RAG…pdf`,
+   sección "Riesgos y cómo reducirlos") lo marca como el riesgo #1 y asigna
+   a Miguel "si falla, guardar evidencia y consultar al profe". El plan de
+   contingencia ya anticipaba esta situación.
+
+4. **El reranker se desactivó porque el modelo específico
+   `llama-nemotron-rerank-1b-v2` requiere GPU NVIDIA y no tiene sustituto
+   directo con la misma API.** La bandera `USE_RERANKER` existe justamente
+   para apagarlo sin cambiar el flujo de `retrieve()`.
+
+**Qué aceptamos del impacto:** Hit@5 medido fue 85.71 % con búsqueda híbrida
+sin rerank; es alto para un corpus de 446 chunks, pero con rerank activo
+probablemente subiría. Esta es la deuda técnica que queda.
+
+**Trabajo futuro (vLLM):**
+- Probar vLLM en una máquina Linux con GPU NVIDIA o en Colab con T4/A100,
+  usando exactamente el perfil `models` del compose actual.
+- Benchmarkear la diferencia híbrida vs híbrida+rerank con números reales.
+
+### Otras limitaciones
+
+- **LLM 4B**: suficiente para RAG con contexto citado, pero puede confundir
+  referencias largas. Un nano-30B subiría la calidad a cambio de 10 GB más
+  de RAM y respuestas mucho más lentas.
+- **Chunks de referencias dominan**: el PDF tiene 10+ páginas de referencias;
+  BM25 las favorece para preguntas genéricas. Se podría filtrar por
+  `section ILIKE '%References%'` o reducir su peso en RRF.
+- **Qwen-VL es caro**: ~15 GB en memoria. Si no cabe, correr la etapa
   `figures` en Colab y copiar `chunks.jsonl` actualizado.
 - **Rate limit en memoria del contenedor único**: funciona para la demo;
   si se escalara a varias réplicas habría que moverlo a Redis-only con
