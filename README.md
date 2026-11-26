@@ -61,11 +61,20 @@ Con `FAKE_MODELS=true` no hace llamadas de red: embeddings deterministas por has
 ## Evaluación
 
 ```bash
-cp data/eval_questions.example.jsonl data/eval_questions.jsonl   # escribe 25-30 preguntas
-make eval
+docker compose -f infra/docker-compose.yml --env-file .env cp \
+  data/eval_questions.jsonl api:/app/data/eval_questions.jsonl
+docker compose -f infra/docker-compose.yml --env-file .env exec -T api \
+  python /app/scripts/eval.py /app/data/eval_questions.jsonl
 ```
 
 Mide `Hit@5`: considera hit si algún chunk devuelto por `retrieve()` coincide con la sección esperada (substring) o con la página esperada.
+
+### Prueba local en la Mac de Miguel (25 de noviembre de 2026)
+
+- **Hit@5 de 24/28 (85.71 %)** con el índice final. Contiene 446 fragmentos de texto y tablas y las siete figuras numeradas del artículo descritas con Qwen2.5-VL 7B en Ollama.
+- La configuración local usó embeddings Nemotron de 1024 dimensiones servidos por llama.cpp, búsqueda híbrida en OpenSearch, reranker desactivado y Nemotron 3 Nano 4B en Ollama con una ventana de 16 384 tokens. La pregunta de demostración sobre LOMAR devolvió citas de la sección 6.1.1 y la figura 4, ambas en la página 19.
+- Durante el ensayo, macOS reportó **20 GB utilizados** en el equipo. Docker reportó **1.08 GiB** sumados entre los cinco contenedores y Ollama reportó **3.3 GB** para el modelo de chat. La cifra de macOS incluye el resto de procesos del equipo.
+- La demo se ejecutó en `http://localhost:5173/`. La pregunta de LOMAR tardó 78 segundos. El chat respondió «No está en el artículo.» a una pregunta sin evidencia y el panel de administración exigió el token. La validación de vLLM y su reranker quedó pendiente.
 
 ## Estructura
 
