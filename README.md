@@ -33,9 +33,7 @@ pasa a modelos reales cambiando `FAKE_MODELS=true` → `false` en `.env`.
 **Cuartil Q1:** *Artificial Intelligence Review* es Q1 en SJR para la
 categoría "Artificial Intelligence" (Springer Nature).
 
-> **PENDIENTE (Hervey):** captura de SJR o JCR que muestre Q1 — guardar como
-> `docs/evidencia_q1.png` y referenciarla aquí:
-> `![Evidencia Q1](docs/evidencia_q1.png)`.
+![Evidencia Q1 — SCImago](docs/evidencia_q1.png)
 
 **Por qué este survey.** Cubre exactamente el dominio del agente que
 construimos (LLMs como agentes que usan herramientas), lo que da sentido a
@@ -493,10 +491,14 @@ y [`docs/admin_runs_sample.json`](docs/admin_runs_sample.json)):
 | `cache_hit_rate`  | 15.2 %     |
 | `errors`          | 2          |
 
-> **PENDIENTE (Hervey):** captura visual del panel → `docs/admin.png`.
-> Comando para re-poblar datos de prueba:
-> `docker compose -f infra/docker-compose.yml --env-file .env exec api python /app/scripts/seed_runs.py 50`
-> Abrir `http://localhost:5173/admin` y usar el `ADMIN_TOKEN` del `.env`.
+![Panel /admin con 92 corridas](docs/admin.png)
+
+Reproducir los datos de prueba:
+```bash
+docker compose -f infra/docker-compose.yml --env-file .env exec api \
+  python /app/scripts/seed_runs.py 50
+```
+Luego abrir `http://localhost:5173/admin` con el `ADMIN_TOKEN` del `.env`.
 
 ---
 
@@ -649,15 +651,55 @@ Un solo `docker-compose.yml` con 4 perfiles:
 de Apple. Es la única excepción al "un solo `docker compose up`" y está
 justificada: Docker Desktop en macOS no expone Metal.
 
-### ngrok
+### ngrok (demo)
+
+1. **Token de ngrok.** Crea cuenta en https://dashboard.ngrok.com/signup (gratis),
+   copia tu *Authtoken* y pégalo en `.env`:
+
+   ```bash
+   sed -i '' "s|^NGROK_AUTHTOKEN=.*|NGROK_AUTHTOKEN=<TU_TOKEN>|" .env
+   ```
+
+2. **Levantar el stack principal** (si no está arriba):
+
+   ```bash
+   make up
+   ```
+
+3. **Levantar el túnel**:
+
+   ```bash
+   docker compose -f infra/docker-compose.yml --env-file .env --profile tunnel up -d ngrok
+   ```
+
+4. **Ver la URL pública en el dashboard local de ngrok**:
+
+   ```bash
+   open http://localhost:4040
+   ```
+
+   En *Status → Tunnels* verás la URL `https://xxxx.ngrok-free.app`.
+   Pégala en cualquier navegador: carga el chat, `/single` y `/admin`.
+
+   ![Dashboard local de ngrok con el túnel activo](docs/ngrok_evidencia.png)
+
+5. **Apagar el túnel**:
+
+   ```bash
+   docker compose -f infra/docker-compose.yml --env-file .env --profile tunnel down
+   ```
+
+**Antes de la demo:** cambia `ADMIN_TOKEN` por uno fuerte y reinicia el api:
 
 ```bash
-export NGROK_AUTHTOKEN=<tu_token>    # no comitear
-docker compose -f infra/docker-compose.yml --profile tunnel up -d ngrok
-open http://localhost:4040           # ver URL pública asignada
+NEW=$(openssl rand -hex 32)
+sed -i '' "s|^ADMIN_TOKEN=.*|ADMIN_TOKEN=$NEW|" .env
+docker compose -f infra/docker-compose.yml --env-file .env restart api
+echo "nuevo ADMIN_TOKEN: $NEW"
 ```
 
-Antes de publicar: cambiar `ADMIN_TOKEN` a algo fuerte (`openssl rand -hex 32`).
+No publiques la URL de ngrok antes de tiempo — `/admin` queda expuesto
+(protegido por token, pero mejor no tentar la suerte).
 
 ---
 
